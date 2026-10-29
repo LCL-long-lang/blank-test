@@ -1,0 +1,27 @@
+# 密钥
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 数据库（可由 scripts/seed_business_db.py 重新生成）
+backend/data/*.db
+backend/data/*.db-wal
+backend/data/*.db-shm
+
+# 前端
+node_modules/
+frontend/dist/
+frontend/e2e/screenshots/
+*.tsbuildinfo
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

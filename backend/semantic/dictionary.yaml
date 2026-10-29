@@ -1,0 +1,71 @@
+# 业务库数据字典：SQLite 不支持表/字段注释，在这里维护中文含义、枚举值和指标口径。
+# 由 app/db/schema.py 读取，与实际表结构合并后注入 SQL 生成 Prompt。
+
+tables:
+  regions:
+    label: 地区
+    description: 省份与所属大区的对应关系
+    columns:
+      region_id: 地区 ID
+      region_name: 大区名称，取值：华东、华南、华北、华中、西南、西北、东北
+      province: 省份名称，如 上海、广东、北京
+
+  customers:
+    label: 客户
+    columns:
+      customer_id: 客户 ID
+      name: 客户姓名
+      gender: 性别，取值：男、女
+      age: 年龄（岁）
+      city: 所在省份（与 regions.province 一致）
+      region_id: 所属地区 ID，关联 regions.region_id
+      register_date: 注册日期，格式 YYYY-MM-DD
+      member_level: 会员等级，取值：普通、银卡、金卡、钻石
+
+  categories:
+    label: 商品品类
+    columns:
+      category_id: 品类 ID
+      category_name: 品类名称，取值：手机数码、家用电器、服装鞋包、美妆个护、食品饮料、图书文娱、家居日用、运动户外
+
+  products:
+    label: 商品
+    columns:
+      product_id: 商品 ID
+      product_name: 商品名称
+      category_id: 所属品类 ID，关联 categories.category_id
+      brand: 品牌，如 华为、小米、美的
+      unit_price: 标价（元）
+      cost_price: 成本价（元）
+
+  orders:
+    label: 订单
+    description: 一行一个订单；统计销售类指标时只计 status='completed'
+    columns:
+      order_id: 订单 ID
+      customer_id: 下单客户 ID，关联 customers.customer_id
+      order_date: 下单时间，格式 YYYY-MM-DD HH:MM:SS（TEXT），按月统计用 strftime('%Y-%m', order_date)
+      status: 订单状态，取值：completed（已完成）、cancelled（已取消）、refunded（已退款）
+      payment_method: 支付方式，取值：支付宝、微信支付、银行卡、货到付款
+      total_amount: 订单总金额（元），等于该订单明细 quantity * unit_price 之和
+
+  order_items:
+    label: 订单明细
+    description: 一行一个订单中的一种商品
+    columns:
+      item_id: 明细 ID
+      order_id: 所属订单 ID，关联 orders.order_id
+      product_id: 商品 ID，关联 products.product_id
+      quantity: 购买数量
+      unit_price: 成交单价（元），大促期间低于商品标价
+
+# 指标口径：模型生成 SQL 时必须遵循
+metrics:
+  销售额: SUM(order_items.quantity * order_items.unit_price)，只计 orders.status='completed'；按订单汇总时也可用 SUM(orders.total_amount)
+  订单数: COUNT(DISTINCT orders.order_id)，只计 status='completed'，除非问题明确问取消/退款订单
+  客单价: 销售额 / 订单数，写成 1.0 * 销售额 / 订单数
+  销量: SUM(order_items.quantity)，只计 status='completed'
+  毛利: SUM(order_items.quantity * (order_items.unit_price - products.cost_price))，只计 status='completed'
+  毛利率: 毛利 / 销售额，写成 1.0 * 毛利 / 销售额
+  退款率: 退款订单数 / 全部订单数，写成 1.0 * SUM(status='refunded') / COUNT(*)
+  复购率: 下单次数 >= 2 的客户数 / 有下单的客户数（只计 completed 订单）

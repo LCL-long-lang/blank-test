@@ -1,0 +1,262 @@
+# 示例问题集：问题 → 标准 SQL。
+# 用途：① SQL 生成 Prompt 的 Few-shot（few_shot: true 的条目）；② 评测集（tests/eval/run_eval.py）。
+# chart 为期望的图表类型，供图表推荐测试参考。
+
+examples:
+  - id: kpi_last_month_sales
+    question: 上个月的总销售额是多少？
+    chart: kpi
+    few_shot: true
+    sql: |
+      SELECT ROUND(SUM(oi.quantity * oi.unit_price), 2) AS sales
+      FROM orders o JOIN order_items oi ON oi.order_id = o.order_id
+      WHERE o.status = 'completed'
+        AND strftime('%Y-%m', o.order_date) = strftime('%Y-%m', date('now', 'start of month', '-1 month'))
+
+  - id: kpi_order_count_this_year
+    question: 今年一共有多少笔已完成的订单？
+    chart: kpi
+    sql: |
+      SELECT COUNT(*) AS order_count
+      FROM orders
+      WHERE status = 'completed' AND strftime('%Y', order_date) = strftime('%Y', 'now')
+
+  - id: kpi_avg_order_value
+    question: 近 30 天的客单价是多少？
+    chart: kpi
+    sql: |
+      SELECT ROUND(1.0 * SUM(total_amount) / COUNT(*), 2) AS avg_order_value
+      FROM orders
+      WHERE status = 'completed' AND order_date >= date('now', '-30 days')
+
+  - id: line_monthly_sales_6m
+    question: 近 6 个月每月的销售额趋势
+    chart: line
+    few_shot: true
+    sql: |
+      SELECT strftime('%Y-%m', o.order_date) AS month,
+             ROUND(SUM(oi.quantity * oi.unit_price), 2) AS sales
+      FROM orders o JOIN order_items oi ON oi.order_id = o.order_id
+      WHERE o.status = 'completed'
+        AND o.order_date >= date('now', 'start of month', '-5 months')
+      GROUP BY month
+      ORDER BY month
+
+  - id: line_category_sales_6m
+    question: 近 6 个月各品类销售额趋势
+    chart: line
+    few_shot: true
+    sql: |
+      SELECT strftime('%Y-%m', o.order_date) AS month,
+             c.category_name,
+             ROUND(SUM(oi.quantity * oi.unit_price), 2) AS sales
+      FROM orders o
+      JOIN order_items oi ON oi.order_id = o.order_id
+      JOIN products p ON p.product_id = oi.product_id
+      JOIN categories c ON c.category_id = p.category_id
+      WHERE o.status = 'completed'
+        AND o.order_date >= date('now', 'start of month', '-5 months')
+      GROUP BY month, c.category_name
+      ORDER BY month, c.category_name
+
+  - id: line_monthly_orders_12m
+    question: 过去一年每个月的订单数
+    chart: line
+    sql: |
+      SELECT strftime('%Y-%m', order_date) AS month, COUNT(*) AS order_count
+      FROM orders
+      WHERE status = 'completed'
+        AND order_date >= date('now', 'start of month', '-11 months')
+      GROUP BY month
+      ORDER BY month
+
+  - id: line_daily_sales_november
+    question: 去年双 11 前后（11 月 1 日到 11 月 15 日）每天的订单数
+    chart: line
+    sql: |
+      SELECT date(order_date) AS day, COUNT(*) AS order_count
+      FROM orders
+      WHERE status = 'completed'
+        AND date(order_date) BETWEEN date('now', 'start of year', '-1 year', '+10 months')
+                                 AND date('now', 'start of year', '-1 year', '+10 months', '+14 days')
+      GROUP BY day
+      ORDER BY day
+
+  - id: bar_region_sales
+    question: 今年各大区的销售额排名
+    chart: bar
+    few_shot: true
+    sql: |
+      SELECT r.region_name, ROUND(SUM(o.total_amount), 2) AS sales
+      FROM orders o
+      JOIN customers cu ON cu.customer_id = o.customer_id
+      JOIN regions r ON r.region_id = cu.region_id
+      WHERE o.status = 'completed' AND strftime('%Y', o.order_date) = strftime('%Y', 'now')
+      GROUP BY r.region_name
+      ORDER BY sales DESC
+
+  - id: bar_top10_products
+    question: 销量最高的 10 个商品
+    chart: bar
+    sql: |
+      SELECT p.product_name, SUM(oi.quantity) AS quantity
+      FROM orders o
+      JOIN order_items oi ON oi.order_id = o.order_id
+      JOIN products p ON p.product_id = oi.product_id
+      WHERE o.status = 'completed'
+      GROUP BY p.product_id, p.product_name
+      ORDER BY quantity DESC
+      LIMIT 10
+
+  - id: bar_brand_sales_phone
+    question: 手机数码品类下各品牌的销售额
+    chart: bar
+    sql: |
+      SELECT p.brand, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS sales
+      FROM orders o
+      JOIN order_items oi ON oi.order_id = o.order_id
+      JOIN products p ON p.product_id = oi.product_id
+      JOIN categories c ON c.category_id = p.category_id
+      WHERE o.status = 'completed' AND c.category_name = '手机数码'
+      GROUP BY p.brand
+      ORDER BY sales DESC
+
+  - id: bar_category_margin
+    question: 各品类的毛利率是多少？
+    chart: bar
+    few_shot: true
+    sql: |
+      SELECT c.category_name,
+             ROUND(1.0 * SUM(oi.quantity * (oi.unit_price - p.cost_price))
+                   / SUM(oi.quantity * oi.unit_price), 4) AS gross_margin
+      FROM orders o
+      JOIN order_items oi ON oi.order_id = o.order_id
+      JOIN products p ON p.product_id = oi.product_id
+      JOIN categories c ON c.category_id = p.category_id
+      WHERE o.status = 'completed'
+      GROUP BY c.category_name
+      ORDER BY gross_margin DESC
+
+  - id: bar_province_customers
+    question: 客户数最多的 5 个省份
+    chart: bar
+    sql: |
+      SELECT city AS province, COUNT(*) AS customer_count
+      FROM customers
+      GROUP BY city
+      ORDER BY customer_count DESC
+      LIMIT 5
+
+  - id: pie_member_level
+    question: 各会员等级的客户占比
+    chart: pie
+    few_shot: true
+    sql: |
+      SELECT member_level, COUNT(*) AS customer_count
+      FROM customers
+      GROUP BY member_level
+      ORDER BY customer_count DESC
+
+  - id: pie_payment_method
+    question: 各支付方式的订单占比
+    chart: pie
+    sql: |
+      SELECT payment_method, COUNT(*) AS order_count
+      FROM orders
+      WHERE status = 'completed'
+      GROUP BY payment_method
+      ORDER BY order_count DESC
+
+  - id: pie_order_status
+    question: 订单状态的分布情况
+    chart: pie
+    sql: |
+      SELECT status, COUNT(*) AS order_count
+      FROM orders
+      GROUP BY status
+      ORDER BY order_count DESC
+
+  - id: stacked_region_category
+    question: 各大区不同品类的销售额对比
+    chart: stacked_bar
+    sql: |
+      SELECT r.region_name, c.category_name,
+             ROUND(SUM(oi.quantity * oi.unit_price), 2) AS sales
+      FROM orders o
+      JOIN order_items oi ON oi.order_id = o.order_id
+      JOIN products p ON p.product_id = oi.product_id
+      JOIN categories c ON c.category_id = p.category_id
+      JOIN customers cu ON cu.customer_id = o.customer_id
+      JOIN regions r ON r.region_id = cu.region_id
+      WHERE o.status = 'completed'
+      GROUP BY r.region_name, c.category_name
+      ORDER BY r.region_name, c.category_name
+
+  - id: bar_refund_rate_category
+    question: 各品类的退款率
+    chart: bar
+    sql: |
+      SELECT c.category_name,
+             ROUND(1.0 * COUNT(DISTINCT CASE WHEN o.status = 'refunded' THEN o.order_id END)
+                   / COUNT(DISTINCT o.order_id), 4) AS refund_rate
+      FROM orders o
+      JOIN order_items oi ON oi.order_id = o.order_id
+      JOIN products p ON p.product_id = oi.product_id
+      JOIN categories c ON c.category_id = p.category_id
+      GROUP BY c.category_name
+      ORDER BY refund_rate DESC
+
+  - id: kpi_repurchase_rate
+    question: 客户的复购率是多少？
+    chart: kpi
+    sql: |
+      SELECT ROUND(1.0 * SUM(CASE WHEN cnt >= 2 THEN 1 ELSE 0 END) / COUNT(*), 4) AS repurchase_rate
+      FROM (
+        SELECT customer_id, COUNT(*) AS cnt
+        FROM orders
+        WHERE status = 'completed'
+        GROUP BY customer_id
+      ) t
+
+  - id: bar_age_group_sales
+    question: 不同年龄段客户的消费金额
+    chart: bar
+    sql: |
+      SELECT CASE
+               WHEN cu.age < 25 THEN '18-24'
+               WHEN cu.age < 35 THEN '25-34'
+               WHEN cu.age < 45 THEN '35-44'
+               WHEN cu.age < 55 THEN '45-54'
+               ELSE '55+'
+             END AS age_group,
+             ROUND(SUM(o.total_amount), 2) AS sales
+      FROM orders o JOIN customers cu ON cu.customer_id = o.customer_id
+      WHERE o.status = 'completed'
+      GROUP BY age_group
+      ORDER BY age_group
+
+  - id: table_top_customers
+    question: 消费金额最高的 10 位客户的姓名、会员等级和消费金额
+    chart: table
+    sql: |
+      SELECT cu.name, cu.member_level, cu.city,
+             ROUND(SUM(o.total_amount), 2) AS sales,
+             COUNT(*) AS order_count
+      FROM orders o JOIN customers cu ON cu.customer_id = o.customer_id
+      WHERE o.status = 'completed'
+      GROUP BY cu.customer_id, cu.name, cu.member_level, cu.city
+      ORDER BY sales DESC
+      LIMIT 10
+
+  - id: line_yoy_monthly
+    question: 今年和去年每个月的销售额对比
+    chart: line
+    sql: |
+      SELECT strftime('%m', order_date) AS month,
+             strftime('%Y', order_date) AS year,
+             ROUND(SUM(total_amount), 2) AS sales
+      FROM orders
+      WHERE status = 'completed'
+        AND strftime('%Y', order_date) IN (strftime('%Y', 'now'), strftime('%Y', 'now', '-1 year'))
+      GROUP BY year, month
+      ORDER BY month, year

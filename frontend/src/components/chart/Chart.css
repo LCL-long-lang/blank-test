@@ -1,0 +1,272 @@
+.chart-panel {
+  position: relative;
+}
+
+.chart-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.chart-toolbar .spacer {
+  flex: 1;
+}
+
+.chart-title-bar {
+  padding: 12px 16px 0;
+}
+
+.chart-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.chart-meta {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.chart-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px 12px;
+}
+
+.chart-tabs {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-tabs .ant-tabs-content-holder,
+.chart-tabs .ant-tabs-content,
+.chart-tabs .ant-tabs-tabpane-active {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+.chart-tabs .ant-tabs-nav {
+  margin-bottom: 8px;
+}
+
+/* 图表画布：带角标的“全息框” */
+.chart-frame {
+  position: relative;
+  /* 面板高度减去头部、标题栏、工具栏、标签栏，填满剩余空间 */
+  height: max(320px, calc(100vh - 290px));
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(600px 240px at 50% 0, rgba(56, 219, 255, 0.07), transparent 70%),
+    var(--surface);
+  overflow: hidden;
+}
+
+.chart-frame::before,
+.chart-frame::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--accent);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.chart-frame::before {
+  top: 6px;
+  left: 6px;
+  border-right: 0;
+  border-bottom: 0;
+  border-radius: 4px 0 0 0;
+}
+
+.chart-frame::after {
+  right: 6px;
+  bottom: 6px;
+  border-left: 0;
+  border-top: 0;
+  border-radius: 0 0 4px 0;
+}
+
+.chart-canvas {
+  position: absolute;
+  inset: 12px 8px 8px;
+  transition: opacity 0.2s;
+}
+
+.chart-canvas.dimmed {
+  opacity: 0.45;
+}
+
+/* 扫描线：生成中展示 */
+.scanline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(180deg, transparent, rgba(56, 219, 255, 0.12), transparent);
+  animation: scan 1.8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes scan {
+  from {
+    top: -40%;
+  }
+  to {
+    top: 100%;
+  }
+}
+
+/* KPI */
+.kpi {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.kpi-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.kpi-hero {
+  font-size: 56px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text);
+  text-shadow: 0 0 28px rgba(56, 219, 255, 0.45);
+}
+
+.kpi-exact {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--mono);
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  width: 100%;
+  margin-top: 22px;
+}
+
+.kpi-tile {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(110, 180, 255, 0.04);
+}
+
+.kpi-tile-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.kpi-tile-value {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.chart-panel.fullscreen .chart-frame {
+  height: calc(100vh - 230px);
+}
+
+/* 数据表 */
+.table-wrap {
+  max-height: max(320px, calc(100vh - 290px));
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.data-table .ant-table {
+  background: transparent;
+  font-size: 12px;
+}
+
+.sql-view {
+  max-height: max(320px, calc(100vh - 290px));
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(6, 11, 23, 0.6);
+}
+
+.sql-view .sql-code {
+  border-top: 0;
+  max-height: none;
+}
+
+/* 空状态 */
+.chart-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.empty-radar {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(circle, transparent 38%, rgba(110, 180, 255, 0.08) 39%, transparent 40%),
+    radial-gradient(circle, transparent 68%, rgba(110, 180, 255, 0.08) 69%, transparent 70%);
+  overflow: hidden;
+}
+
+.empty-radar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(from 0deg, rgba(56, 219, 255, 0.35), transparent 25%);
+  animation: spin 3.5s linear infinite;
+}
+
+.empty-title {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.empty-sub {
+  font-size: 12px;
+}
+
+.chart-empty-inline {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.chart-error {
+  margin: 0 16px;
+}

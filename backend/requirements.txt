@@ -1,0 +1,14 @@
+fastapi==0.142.2
+uvicorn[standard]==0.54.0
+sse-starlette==3.5.0
+pydantic==2.13.5
+pydantic-settings==2.15.0
+langchain-core==1.6.6
+langchain-openai==1.6.7
+openai==3.24.0
+sqlglot==30.21.0
+pyyaml==6.0.3
+
+# 测试
+pytest==9.1.1
+httpx==0.28.1

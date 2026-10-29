@@ -1,0 +1,76 @@
+/* 全局科技风底色：深海军蓝 + 细网格 + 顶部光晕。组件样式各自放在同名 .css 中 */
+:root {
+  --bg: #060b17;
+  --surface: #0f1626;
+  --surface-raised: #141d31;
+  --surface-glass: rgba(15, 22, 38, 0.72);
+  --border: rgba(110, 180, 255, 0.14);
+  --border-strong: rgba(56, 219, 255, 0.45);
+  --accent: #38dbff;
+  --accent-2: #7c6cff;
+  --accent-glow: 0 0 0 1px rgba(56, 219, 255, 0.35), 0 0 18px rgba(56, 219, 255, 0.22);
+  --text: #e6edf7;
+  --text-secondary: #a3b1c6;
+  --text-muted: #6b7a90;
+  --good: #0ca30c;
+  --critical: #e66767;
+  --mono: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color: var(--text);
+  background:
+    radial-gradient(1200px 520px at 50% -180px, rgba(56, 219, 255, 0.14), transparent 70%),
+    radial-gradient(800px 400px at 100% 100%, rgba(124, 108, 255, 0.1), transparent 70%),
+    linear-gradient(rgba(110, 180, 255, 0.035) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, rgba(110, 180, 255, 0.035) 1px, transparent 1px) 0 0 / 32px 32px,
+    var(--bg);
+}
+
+::selection {
+  background: rgba(56, 219, 255, 0.3);
+}
+
+/* 细滚动条 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(110, 180, 255, 0.22) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(110, 180, 255, 0.22);
+  border-radius: 3px;
+}
+
+/* 等宽数字：只用于需要纵向对齐的场景 */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
